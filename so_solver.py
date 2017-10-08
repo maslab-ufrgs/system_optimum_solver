@@ -21,8 +21,8 @@ import string
 import argparse
 
 # Local modules
-from TAP_GA_QL.modules.functions.functions import *
-from TAP_GA_QL.ksp import *
+from modules.classes import *
+
 
 class SOSolver():
 
@@ -114,4 +114,4 @@ if __name__ == '__main__':
     v, e, od = read_infos(args.file, flow=0)
 
     so = SOSolver(v, e, od, args.file)
-    so.solve(args.lp, verbose=True)
+    so.solve(generate_lp=args.lp, verbose=True)
