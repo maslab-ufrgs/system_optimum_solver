@@ -113,4 +113,4 @@ if __name__ == '__main__':
     v, e, od = read_infos(args.file, flow=0)
 
     so = SOSolver(v, e, od, args.file)
-    so.solve(verbose=True, args.lp)
+    so.solve(args.lp, verbose=True)
