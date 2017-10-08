@@ -1,3 +1,6 @@
+# System Optimal Solver
+Python implementation, using the Cplex Api, to calculate the System Optimal value of a given network.
+
 IMPORTANT
 =========
 Need to initialize the TAP_GA_QL submodule, to do so use the following command:
