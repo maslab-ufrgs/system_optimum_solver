@@ -75,7 +75,7 @@ class SOSolver():
 
         self.model.minimize(cost)
 
-    def solve(self, verbose=false, generate_lp=False):
+    def solve(self, verbose=False, generate_lp=False):
 
         self.__generate_constraints__()
         self.__generate_objective_function__()
@@ -113,4 +113,4 @@ if __name__ == '__main__':
     v, e, od = read_infos(args.file, flow=0)
 
     so = SOSolver(v, e, od, args.file)
-    so.solve(verbose=true, args.lp)
+    so.solve(verbose=True, args.lp)
