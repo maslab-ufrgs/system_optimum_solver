@@ -34,7 +34,6 @@ Options
 =======
 
 ```
-optional arguments:
   -h, --help            show this help message and exit
   -f FILE               The network file.
   -lp LP                Generate lp file format of the problem
