@@ -83,7 +83,8 @@ class SOSolver():
 
         if solution:
             self.system_optimal = solution.get_objective_value()
-            print(solution.display())
+            if verbose:
+                print(solution.display())
 
             if generate_lp:
                 lpfile = open(self.name+'.lp', 'w')
