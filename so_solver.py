@@ -21,9 +21,8 @@ import string
 import argparse
 
 # Local modules
-from modules.functions.functions import *
-from ksp.KSP import *
-
+from TAP_GA_QL.modules.functions.functions import *
+from TAP_GA_QL.ksp import *
 
 class SOSolver():
 
@@ -76,7 +75,7 @@ class SOSolver():
 
         self.model.minimize(cost)
 
-    def solve(self, generate_lp=False):
+    def solve(self, verbose=false, generate_lp=False):
 
         self.__generate_constraints__()
         self.__generate_objective_function__()
@@ -114,4 +113,4 @@ if __name__ == '__main__':
     v, e, od = read_infos(args.file, flow=0)
 
     so = SOSolver(v, e, od, args.file)
-    so.solve(args.lp)
+    so.solve(verbose=true, args.lp)

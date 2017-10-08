@@ -1,0 +1,3 @@
+[submodule "TAP_GA_QL"]
+	path = TAP_GA_QL
+	url = https://github.com/maslab-ufrgs/TAP_GA_QL.git
