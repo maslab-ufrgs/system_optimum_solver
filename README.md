@@ -1,6 +1,8 @@
 # System Optimal Solver
 Python implementation, using the Cplex Api, to calculate the System Optimal value of a given network.
 
+Network's cost functions must be linear.
+
  There is the need to initialize the submodules, to do so use the following command:
 ```sh
 git submodule init && git submodule update
@@ -27,11 +29,11 @@ Or:
 ```sh
 ./so_solver.py [OPTIONS]
 ```
-To get the SO:
+To get the System Optimal:
 ```sh
 so = SOSolver(nodes, edges, od_matrix)
 so.solve()
-so.get_system_optimal()
+system_optimal = so.get_system_optimal()
 ```
 
 Options
