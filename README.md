@@ -1,6 +1,11 @@
 # System Optimal Solver
 Python implementation, using the Cplex Api, to calculate the System Optimal value of a given network.
 
+ There is the need to initialize the submodules, to do so use the following command:
+```sh
+git submodule init && git submodule update
+```
+
 Can get networks from
 ===========================
  * [Networks](https://github.com/maslab-ufrgs/network-files)
@@ -9,11 +14,8 @@ Dependencies
 ============
  * [Cplex](https://www-01.ibm.com/software/commerce/optimization/cplex-optimizer/)
  * [DocPlex](https://pypi.python.org/pypi/docplex)
- * [Python 2.7](https://www.python.org/downloads/)
- * [Pyevolve](https://sourceforge.net/projects/pyevolve/)
+ * [Python 3](https://www.python.org/downloads/)
  * [Python Mathematical Expression Evaluator](https://pypi.python.org/pypi/py_expression_eval)
- * [matplotlib](http://matplotlib.org/)
- * [NumPy](http://www.numpy.org/)
 
 Usage
 =====
@@ -25,6 +27,12 @@ Or:
 ```sh
 ./so_solver.py [OPTIONS]
 ```
+To get the SO:
+```sh
+so = SOSolver(nodes, edges, od_matrix)
+so.solve()
+so.get_system_optimal()
+```
 
 Options
 =======
@@ -34,3 +42,9 @@ Options
   -f FILE               The network file.
   -lp LP                Generate lp file format of the problem
 ```
+
+REFERENCES:
+=======
+
+1. Stefanello,Fernando and Bazzan, Ana L. C., 2016. Traffic Assignment Problem - Extending Braess Paradox.
+2. http://wiki.inf.ufrgs.br/network_files_specification.
