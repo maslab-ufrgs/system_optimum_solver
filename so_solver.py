@@ -32,6 +32,8 @@ class SOSolver():
         self.model = Model(name=self.name)
         self.vars = {}
         self.system_optimal = -1
+        self.sum_flows = sum(od_matrix.values())
+
 
     def __generate_constraints__(self):
 
@@ -98,9 +100,12 @@ class SOSolver():
         solution = self.model.solve()
 
         if solution:
-            self.system_optimal = solution.get_objective_value()
+
+            self.system_optimal = solution.get_objective_value()/self.sum_flows
+
             if verbose:
                 print(solution.display())
+                print('System Optimal = ' + str(self.system_optimal))
 
             if generate_lp:
                 lpfile = open(self.name+'.lp', 'w')
