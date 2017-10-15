@@ -24,7 +24,7 @@ from MSA.successive_averages import *
 
 class SOSolver():
 
-    def __init__(self, nodes, edges, od_matrix, name):
+    def __init__(self, nodes, edges, od_matrix, name='model'):
         self.nodes = nodes
         self.edges = edges
         self.od_matrix = od_matrix
@@ -86,8 +86,6 @@ class SOSolver():
             m = float(m.replace(e.var, '').replace('*', ''))
             n = float(n)
 
-            print(m, n)
-
             # m*f^2 + n*f
             cost += m*(self.vars[e.name] ** 2) + self.vars[e.name]*n
 
@@ -131,5 +129,6 @@ if __name__ == '__main__':
 
     v, e, od = generateGraph(args.file, flow=0.0)
 
-    so = SOSolver(v, e, od, args.file)
+    so = SOSolver(v, e, od, name=args.file)
     so.solve(generate_lp=args.lp, verbose=True)
+
