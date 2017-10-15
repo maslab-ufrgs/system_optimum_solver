@@ -12,24 +12,22 @@ This module contains the System Optimal Solver, which calculates the SO of a net
 Warning: Use spaces instead of tabs, or configure your editor to transform tab to 4 spaces.
 """
 
-import cplex
-from docplex.mp.model import *
-
-import os
-from time import localtime
-import string
 import argparse
+import os
+import re
+from docplex.mp.model import *
+from py_expression_eval import *
 
 # Local modules
-from modules.classes import *
+from MSA.successive_averages import *
 
 
 class SOSolver():
 
-    def __init__(self, nodes, edges, od_list, name):
+    def __init__(self, nodes, edges, od_matrix, name):
         self.nodes = nodes
         self.edges = edges
-        self.od_list = od_list
+        self.od_matrix = od_matrix
         self.name = os.path.basename(name).split('.')[0]
         self.model = Model(name=self.name)
         self.vars = {}
@@ -41,34 +39,54 @@ class SOSolver():
         self.vars = {e.name: self.model.continuous_var(name=e.name) for e in self.edges}
 
         for n in self.nodes:
+
             flow = 0
             # od is (origin, destiny, demand)
-            for od in self.od_list:
+            for od in self.od_matrix.keys():
+
                 # if node is an origin
-                if n.name == od[0]:
-                    flow -= od[2]
+                if n.name == od.split('|')[0]:
+                    flow -= self.od_matrix[od]
+
                 # if node is a destiny
-                elif n.name == od[1]:
-                    flow += od[2]
+                elif n.name == od.split('|')[1]:
+                    flow += self.od_matrix[od]
+
+            leaving = []
+            arriving = []
+            for edge in self.edges:
+                if edge.start == n.name:
+                    leaving.append(edge)
+                elif edge.end == n.name:
+                    arriving.append(edge)
+
             # Flow Arriving - Flow Leaving == 0 if node is neither an origin or a destiny
             #                              == demand if node is destiny
             #                              == -demand if node is origin
-            self.model.add_constraint((sum(self.vars[y.name] for y in pickEdgesListAll(n, self.edges) if y.end == n.name) +
-                                      (sum(-self.vars[x.name] for x in pickEdgesList(n, self.edges)))) == flow, n.name)
+            self.model.add_constraint((sum(self.vars[y.name] for y in arriving) +
+                                      (sum(-self.vars[x.name] for x in leaving))) == flow, n.name)
 
     # Function must be a linear function (f) f*m+n
     def __generate_objective_function__(self):
 
         cost = 0
         for e in self.edges:
-            m, n = e.function.replace('(', '').replace(')','').split('+')
+
+            f = e.function[2]
+            for var in e.function[1]:
+                f = f.substitute(var, e.params[var])
+            f = f.toString()
+
+            m, n = f.replace('(', '').replace(')', '').split('+')
 
             # m is the parameter which multiplies the variable, n is the constant
-            if m.find('f') == -1:
+            if m.find(e.var) == -1:
                 m, n = n, m
 
-            m = float(m.replace('f', '').replace('*', ''))
+            m = float(m.replace(e.var, '').replace('*', ''))
             n = float(n)
+
+            print(m, n)
 
             # m*f^2 + n*f
             cost += m*(self.vars[e.name] ** 2) + self.vars[e.name]*n
@@ -111,7 +129,7 @@ if __name__ == '__main__':
 
     args = prs.parse_args()
 
-    v, e, od = read_infos(args.file, flow=0)
+    v, e, od = generateGraph(args.file, flow=0.0)
 
     so = SOSolver(v, e, od, args.file)
     so.solve(generate_lp=args.lp, verbose=True)
