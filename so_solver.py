@@ -75,8 +75,11 @@ class SOSolver():
         for e in self.edges:
 
             f = e.function[2]
+            print(e.function[1])
+
             for var in e.function[1]:
-                f = f.substitute(var, e.params[var])
+                print(float(e.params[var]))
+                f = f.substitute(var, float(e.params[var]))
             f = f.toString()
 
             m, n = f.replace('(', '').replace(')', '').split('+')
@@ -85,7 +88,14 @@ class SOSolver():
             if m.find(e.var) == -1:
                 m, n = n, m
 
-            m = float(m.replace(e.var, '').replace('*', ''))
+            # f/m
+            if m.find('*') == -1:
+                m = float(m.replace(e.var, '').replace('/', ''))
+                m = 1/m
+            #f*m
+            else:
+                m = float(m.replace(e.var, '').replace('*', ''))
+
             n = float(n)
 
             # m*f^2 + n*f
