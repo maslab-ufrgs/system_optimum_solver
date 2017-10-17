@@ -68,17 +68,15 @@ class SOSolver():
             self.model.add_constraint((sum(self.vars[y.name] for y in arriving) +
                                       (sum(-self.vars[x.name] for x in leaving))) == flow, n.name)
 
-    # Function must be a linear function (f) f*m+n
+    # Function must be a linear function (f) f*m+n or f/m+n
+    # TODO: bug with scientific notation parametesr in py expression eval
     def __generate_objective_function__(self):
 
         cost = 0
         for e in self.edges:
 
             f = e.function[2]
-            print(e.function[1])
-
             for var in e.function[1]:
-                print(float(e.params[var]))
                 f = f.substitute(var, float(e.params[var]))
             f = f.toString()
 
