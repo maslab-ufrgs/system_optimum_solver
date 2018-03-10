@@ -3,6 +3,7 @@ Changelog:
     v1.0 - Changelog created. <04/10/2017>
     v1.1 - Function string bug corrected
     v1.2 - Git Repository created
+    v2.0 - Included more constraints, which were causing some networks to give a wrong answer <10/03/2018>
 
 Maintainer: Lucas Nunes Alegre (lucasnale@gmail.com)
 Created (changelog): 04/10/2017
@@ -30,47 +31,62 @@ class SOSolver():
         self.od_matrix = od_matrix
         self.name = os.path.basename(name).split('.')[0]
         self.model = Model(name=self.name)
-        self.vars = {}
+	self.model.float_precision = 6
+        self.phi_vars = {}
+	self.x_vars = {}
+	self.l_vars = {}
         self.system_optimal = -1
         self.sum_flows = sum(od_matrix.values())
 
+    def _generate_vars(self):
+	for e in self.edges:
+            self.phi_vars[e.name] = self.model.continuous_var(name='phi_'+e.name)
+            self.l_vars[e.name] = self.model.continuous_var(name='l_'+e.name)
+            for k in self.od_matrix.keys():
+                self.x_vars[e.name+k] = self.model.continuous_var(name='x_'+k+'_'+e.name)
 
-    def __generate_constraints__(self):
+    def _generate_flow_conservation_constraint(self):
 
         # Each edge is a variable of the objective function
-        self.vars = {e.name: self.model.continuous_var(name=e.name) for e in self.edges}
+        for k in self.od_matrix.keys():
+            for n in self.nodes:
 
-        for n in self.nodes:
-
-            flow = 0
-            # od is (origin, destiny, demand)
-            for od in self.od_matrix.keys():
-
+                leaving = []
+                arriving = []
+                for edge in self.edges:
+                    if edge.start == n.name:
+                        leaving.append(edge)
+                    elif edge.end == n.name:
+                        arriving.append(edge)
+            
                 # if node is an origin
-                if n.name == od.split('|')[0]:
-                    flow -= self.od_matrix[od]
-
-                # if node is a destiny
-                elif n.name == od.split('|')[1]:
-                    flow += self.od_matrix[od]
-
-            leaving = []
-            arriving = []
-            for edge in self.edges:
-                if edge.start == n.name:
-                    leaving.append(edge)
-                elif edge.end == n.name:
-                    arriving.append(edge)
-
+                if n.name == k.split('|')[0]: 
+                    demand = -self.od_matrix[k]
+                elif n.name == k.split('|')[1]:
+                    demand = self.od_matrix[k]
+                else:
+                    demand = 0
             # Flow Arriving - Flow Leaving == 0 if node is neither an origin or a destiny
             #                              == demand if node is destiny
             #                              == -demand if node is origin
-            self.model.add_constraint((sum(self.vars[y.name] for y in arriving) +
-                                      (sum(-self.vars[x.name] for x in leaving))) == flow, n.name)
+                self.model.add_constraint((sum(self.x_vars[y.name+k] for y in arriving) -
+                                          (sum(self.x_vars[x.name+k] for x in leaving))) == demand, n.name+k)
+
+    def _generate_total_flow_constraint(self):
+        for e in self.edges:
+            somatorio = sum(self.x_vars[e.name+k] for k in self.od_matrix.keys())
+            self.model.add_constraint(self.l_vars[e.name] == somatorio)
+
+    def _generate_domain_constraint(self):
+        for e in self.edges:
+            self.model.add_constraint(self.l_vars[e.name] >= 0)	
+            self.model.add_constraint(self.phi_vars[e.name] >= 0)
+	    for k in self.od_matrix.keys():
+                self.model.add_constraint(self.x_vars[e.name+k] >= 0)
 
     # Function must be a linear function (f) f*m+n or f/m+n
     # TODO: bug with scientific notation parametesr in py expression eval
-    def __generate_objective_function__(self):
+    def _generate_cost_constraint(self):
 
         cost = 0
         for e in self.edges:
@@ -97,14 +113,22 @@ class SOSolver():
             n = float(n)
 
             # m*f^2 + n*f
-            cost += m*(self.vars[e.name] ** 2) + self.vars[e.name]*n
+            cost = m*(self.l_vars[e.name] ** 2) + self.l_vars[e.name]*n
 
-        self.model.minimize(cost)
+            self.model.add_constraint(cost <= self.phi_vars[e.name])
+
+    def _generate_objective_function(self):
+	self.model.minimize(sum(self.phi_vars.values()))
 
     def solve(self, verbose=False, generate_lp=False):
 
-        self.__generate_constraints__()
-        self.__generate_objective_function__()
+        self._generate_vars()
+        self._generate_objective_function()
+        self._generate_cost_constraint()
+        self._generate_total_flow_constraint()
+        self._generate_flow_conservation_constraint()
+        self._generate_domain_constraint()
+
         solution = self.model.solve()
 
         if solution:
