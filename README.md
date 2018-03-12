@@ -33,7 +33,7 @@ To get the System Optimal:
 ```sh
 so = SOSolver(nodes, edges, od_matrix)
 so.solve()
-system_optimal = so.get_system_optimal()
+system_optimal = so.get_system_optimum()
 ```
 
 Options

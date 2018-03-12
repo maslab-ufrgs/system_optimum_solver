@@ -67,7 +67,6 @@ class SOSolver():
                     elif edge.end == n.name:
                         arriving.append(edge)
             
-                # if node is an origin
                 if n.name == k.split('|')[0]: 
                     demand = -self.od_matrix[k]
                 elif n.name == k.split('|')[1]:
@@ -157,7 +156,7 @@ class SOSolver():
         else:
             print('Error calculating System Optimal!')
 
-    def get_system_optimal(self):
+    def get_system_optimum(self):
 
         return self.system_optimum
 
