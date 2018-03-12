@@ -1,5 +1,5 @@
 # System Optimal Solver
-Python implementation, using the Cplex Api, to calculate the System Optimal value of a given network.
+Python implementation, using the Cplex Api, to calculate the System Optimum value of a given network.
 
 Network's cost functions must be linear.
 

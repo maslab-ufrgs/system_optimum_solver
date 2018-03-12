@@ -35,19 +35,27 @@ class SOSolver():
         self.phi_vars = {}
 	self.x_vars = {}
 	self.l_vars = {}
-        self.system_optimal = -1
+        self.system_optimum = -1
         self.sum_flows = sum(od_matrix.values())
 
     def _generate_vars(self):
+        """
+        For each edge, is created a variable in the format:
+
+        phi_origindestination : The associated cost for the edge
+        l_origindestination : The total flow on the edge
+        x_origindestination_{od pair} : The flow on the edge for the od pair in '{}'
+
+        """
 	for e in self.edges:
-            self.phi_vars[e.name] = self.model.continuous_var(name='phi_'+e.name)
-            self.l_vars[e.name] = self.model.continuous_var(name='l_'+e.name)
+            varName = e.name.replace("-", "") # Cplex doesn't allow '-' on variable name
+            self.phi_vars[e.name] = self.model.continuous_var(name='phi_'+varName)
+            self.l_vars[e.name] = self.model.continuous_var(name='l_'+varName)
             for k in self.od_matrix.keys():
-                self.x_vars[e.name+k] = self.model.continuous_var(name='x_'+k+'_'+e.name)
+                self.x_vars[e.name+k] = self.model.continuous_var(name='x_'+varName+'_{'+k+'}')
 
     def _generate_flow_conservation_constraint(self):
 
-        # Each edge is a variable of the objective function
         for k in self.od_matrix.keys():
             for n in self.nodes:
 
@@ -66,9 +74,7 @@ class SOSolver():
                     demand = self.od_matrix[k]
                 else:
                     demand = 0
-            # Flow Arriving - Flow Leaving == 0 if node is neither an origin or a destiny
-            #                              == demand if node is destiny
-            #                              == -demand if node is origin
+
                 self.model.add_constraint((sum(self.x_vars[y.name+k] for y in arriving) -
                                           (sum(self.x_vars[x.name+k] for x in leaving))) == demand, n.name+k)
 
@@ -91,26 +97,7 @@ class SOSolver():
         cost = 0
         for e in self.edges:
 
-            f = e.function[2]
-            for var in e.function[1]:
-                f = f.substitute(var, float(e.params[var]))
-            f = f.toString()
-
-            m, n = f.replace('(', '').replace(')', '').split('+')
-
-            # m is the parameter which multiplies the variable, n is the constant
-            if m.find(e.var) == -1:
-                m, n = n, m
-
-            # f/m
-            if m.find('*') == -1:
-                m = float(m.replace(e.var, '').replace('/', ''))
-                m = 1/m
-            #f*m
-            else:
-                m = float(m.replace(e.var, '').replace('*', ''))
-
-            n = float(n)
+            m, n = self._get_cost_function_parameters(e)
 
             # m*f^2 + n*f
             cost = m*(self.l_vars[e.name] ** 2) + self.l_vars[e.name]*n
@@ -120,6 +107,30 @@ class SOSolver():
     def _generate_objective_function(self):
 	self.model.minimize(sum(self.phi_vars.values()))
 
+    @staticmethod
+    def _get_cost_function_parameters(edge):
+        f = edge.function[2]
+        for var in edge.function[1]:
+            f = f.substitute(var, float(edge.params[var]))
+        f = f.toString()
+
+        m, n = f.replace('(', '').replace(')', '').split('+')
+
+        # m is the parameter which multiplies the variable, n is the constant
+        if m.find(edge.var) == -1:
+            m, n = n, m
+
+        # f/m
+        if m.find('*') == -1:
+            m = float(m.replace(edge.var, '').replace('/', ''))
+            m = 1/m
+        #f*m
+        else:
+            m = float(m.replace(edge.var, '').replace('*', ''))
+
+        n = float(n)
+        return m, n
+        
     def solve(self, verbose=False, generate_lp=False):
 
         self._generate_vars()
@@ -133,23 +144,22 @@ class SOSolver():
 
         if solution:
 
-            self.system_optimal = solution.get_objective_value()/self.sum_flows
+            self.system_optimum = solution.get_objective_value()/self.sum_flows
 
             if verbose:
                 print(solution.display())
-                print('System Optimal = ' + str(self.system_optimal))
+                print('System Optimal = ' + str(self.system_optimum))
 
             if generate_lp:
-                lpfile = open(self.name+'.lp', 'w')
-                lpfile.write(self.model.export_as_lp_string())
-                lpfile.close()
+                with open(self.name+'.lp', 'w') as lpfile:
+                    lpfile.write(self.model.export_as_lp_string())
 
         else:
             print('Error calculating System Optimal!')
 
     def get_system_optimal(self):
 
-        return self.system_optimal
+        return self.system_optimum
 
 
 if __name__ == '__main__':
