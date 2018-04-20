@@ -1,4 +1,4 @@
-# System Optimal Solver
+# System Optimum Solver
 Python implementation, using the Cplex Api, to calculate the System Optimum value of a given network.
 
 Network's cost functions must be linear.
@@ -35,6 +35,11 @@ so = SOSolver(nodes, edges, od_matrix)
 so.solve()
 system_optimal = so.get_system_optimum()
 ```
+
+The System Optimum
+==================
+![alt text](https://github.com/maslab-ufrgs/system_optimal_solver/blob/master/system_optimum.png)
+
 
 Options
 =======
