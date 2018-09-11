@@ -31,10 +31,10 @@ class SOSolver():
         self.od_matrix = od_matrix
         self.name = os.path.basename(name).split('.')[0]
         self.model = Model(name=self.name)
-	self.model.float_precision = 6
+        self.model.float_precision = 6
         self.phi_vars = {}
-	self.x_vars = {}
-	self.l_vars = {}
+        self.x_vars = {}
+        self.l_vars = {}
         self.system_optimum = -1
         self.sum_flows = sum(od_matrix.values())
 
@@ -47,7 +47,7 @@ class SOSolver():
         x_origindestination_{od pair} : The flow on the edge for the od pair in '{}'
 
         """
-	for e in self.edges:
+        for e in self.edges:
             varName = e.name.replace("-", "") # Cplex doesn't allow '-' on variable name
             self.phi_vars[e.name] = self.model.continuous_var(name='phi_'+varName)
             self.l_vars[e.name] = self.model.continuous_var(name='l_'+varName)
@@ -66,8 +66,8 @@ class SOSolver():
                         leaving.append(edge)
                     elif edge.end == n.name:
                         arriving.append(edge)
-            
-                if n.name == k.split('|')[0]: 
+
+                if n.name == k.split('|')[0]:
                     demand = -self.od_matrix[k]
                 elif n.name == k.split('|')[1]:
                     demand = self.od_matrix[k]
@@ -84,9 +84,9 @@ class SOSolver():
 
     def _generate_domain_constraint(self):
         for e in self.edges:
-            self.model.add_constraint(self.l_vars[e.name] >= 0)	
+            self.model.add_constraint(self.l_vars[e.name] >= 0)
             self.model.add_constraint(self.phi_vars[e.name] >= 0)
-	    for k in self.od_matrix.keys():
+            for k in self.od_matrix.keys():
                 self.model.add_constraint(self.x_vars[e.name+k] >= 0)
 
     # Function must be a linear function (f) f*m+n or f/m+n
@@ -104,7 +104,7 @@ class SOSolver():
             self.model.add_constraint(cost <= self.phi_vars[e.name])
 
     def _generate_objective_function(self):
-	self.model.minimize(sum(self.phi_vars.values()))
+        self.model.minimize(sum(self.phi_vars.values()))
 
     @staticmethod
     def _get_cost_function_parameters(edge):
@@ -129,7 +129,7 @@ class SOSolver():
 
         n = float(n)
         return m, n
-        
+
     def solve(self, verbose=False, generate_lp=False):
 
         self._generate_vars()
@@ -147,14 +147,14 @@ class SOSolver():
 
             if verbose:
                 print(solution.display())
-                print('System Optimal = ' + str(self.system_optimum))
+                print('System Optimum = ' + str(self.system_optimum))
 
             if generate_lp:
                 with open(self.name+'.lp', 'w') as lpfile:
                     lpfile.write(self.model.export_as_lp_string())
 
         else:
-            print('Error calculating System Optimal!')
+            print('Error calculating System Optimum!')
 
     def get_system_optimum(self):
 
