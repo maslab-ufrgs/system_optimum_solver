@@ -112,8 +112,18 @@ class SOSolver():
         for var in edge.function[1]:
             f = f.substitute(var, float(edge.params[var]))
         f = f.toString()
+        f = str(f)
 
-        m, n = f.replace('(', '').replace(')', '').split('+')
+        # constant function
+        if f.find(edge.var) == -1:
+            return 0, float(f)
+
+        f = f.replace('(', '').replace(')', '')
+        if f.find('+') == -1:
+            m = f
+            n = 0.0
+        else:
+            m, n = f.split('+')
 
         # m is the parameter which multiplies the variable, n is the constant
         if m.find(edge.var) == -1:
