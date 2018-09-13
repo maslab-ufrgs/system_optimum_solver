@@ -4,6 +4,7 @@ Changelog:
     v1.1 - Function string bug corrected
     v1.2 - Git Repository created
     v2.0 - Included more constraints, which were causing some networks to give a wrong answer <10/03/2018>
+    v2.1 - Removed dependency from msa directory
 
 Maintainer: Lucas Nunes Alegre (lucasnale@gmail.com)
 Created (changelog): 04/10/2017
@@ -18,12 +19,139 @@ import os
 import re
 from docplex.mp.model import *
 from py_expression_eval import *
-
-# Local modules
-from MSA.successive_averages import *
+from py_expression_eval import Parser
 
 
-class SOSolver():
+class Node(object):
+    """
+    Represents a node in the graph.
+    """
+    def __init__(self, name):
+        """
+        In:
+            name:String = Name of the node.
+        """
+        self.name = name	# name of the node
+        self.dist = 1000000	# distance to this node from start node
+        self.prev = None	# previous node to this node
+        self.flag = 0		# access flag
+
+    def __repr__(self):
+        return repr(self.name)
+
+
+class Edge(object):
+    '''
+    Represents an edge in the graph.
+    '''
+    def __init__(self, start, end, function, param_values, variable):
+        self.name = "%s-%s" % (start,end)
+
+        self.start = start # Start node of the edge
+        self.end = end # End node of the edge
+
+        self.function = function # The function to be applied
+        self.params = param_values # The constant values for the function
+        self.var = variable # The variable of the equation
+
+        self.flow = 0
+        self.cost = 0
+        self.aux_flow = 0
+
+        self.update_cost() # Update for the initial cost
+
+    def update_cost(self):
+        '''
+        Using the function and params attributes, it updates the cost of the edge.
+        '''
+        self.params[self.var] = self.flow
+        self.cost = self.function[2].evaluate(self.params)
+
+    def __repr__(self):
+        return str(str(self.start) + '-' + str(self.end))
+
+
+def generateGraph(graph_file, flow=0.0):
+    """
+    Adapted version from the KSP repository version 1.44.
+    Original is available at: https://github.com/maslab-ufrgs/ksp/releases/tag/V1.44
+    Generates the graph from a text file following the specifications(available @
+        http://wiki.inf.ufrgs.br/network_files_specification).
+    In:
+        graph_file:String = Path to the network(graph) file.
+        flow:Float = Value to sum the cost of the edges.
+
+    Out:
+        V:List = List of vertices or nodes of the graph.
+        E:List = List of the edges of the graph.
+        OD:List = List of the OD pairs in the network.
+    """
+    V = [] # vertices
+    E = [] # edges
+    F = {} # cost functions
+    OD = {} # OD pairs
+
+    lineid = 0
+    for line in open(graph_file, 'r'):
+        lineid += 1
+        # ignore \n
+        line = line.rstrip()
+        # ignore comments
+        hash_pos = line.find('#')
+        if hash_pos > -1:
+            line = line[:hash_pos]
+
+        # split the line
+        taglist = line.split()
+        if len(taglist) == 0:
+            continue
+
+        if taglist[0] == 'function':
+            # process the params
+            params = taglist[2][1:-1].split(',')
+            if len(params) > 1:
+                raise Exception('Cost functions with more than one parameter are not yet'\
+                                'acceptable! (parameters defined: %s)' % str(params)[1:-1])
+
+            # process the function
+            function = Parser().parse(taglist[3])
+
+            # process the constants
+            constants = function.variables()
+            if params[0] in constants: # the parameter must be ignored
+                constants.remove(params[0])
+
+            # store the function
+            F[taglist[1]] = [params[0], constants, function]
+
+        elif taglist[0] == 'node':
+            V.append(Node(taglist[1]))
+
+        elif taglist[0] == 'dedge' or taglist[0] == 'edge': # dedge is a directed edge
+            # process the cost
+            function = F[taglist[4]] # get the corresponding function
+            # associate constants and values specified in the line (in order of occurrence)
+            param_values = dict(zip(function[1], map(float, taglist[5:])))
+
+            param_values[function[0]] = flow # set the function's parameter with the flow value
+
+            # create the edge(s)
+            E.append(Edge(taglist[2], taglist[3], function, param_values, function[0]))
+            if taglist[0] == 'edge':
+                E.append(Edge(taglist[3], taglist[2], function, param_values, function[0]))
+
+        elif taglist[0] == 'od':
+            if taglist[2] != taglist[3]:
+                OD[taglist[1]] = float(taglist[4])
+
+        else:
+            raise Exception('Network file does not comply with the specification!'\
+                            '(line %d: "%s")' % (lineid, line))
+
+    return V, E, OD
+
+
+class SOSolver:
 
     def __init__(self, nodes, edges, od_matrix, name='model'):
         self.nodes = nodes
