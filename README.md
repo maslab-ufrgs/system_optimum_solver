@@ -3,11 +3,6 @@ Python implementation, using the Cplex Api, to calculate the System Optimum valu
 
 Network's cost functions must be linear.
 
- There is the need to initialize the submodules, to do so use the following command:
-```sh
-git submodule init && git submodule update
-```
-
 Can get networks from
 ===========================
  * [Networks](https://github.com/maslab-ufrgs/transportation_networks)
@@ -36,11 +31,6 @@ so.solve()
 system_optimal = so.get_system_optimum()
 ```
 
-The System Optimum
-==================
-![alt text](https://github.com/maslab-ufrgs/system_optimal_solver/blob/master/system_optimum.png)
-
-
 Options
 =======
 
@@ -49,6 +39,11 @@ Options
   -f FILE               The network file.
   -lp LP                Generate lp file format of the problem
 ```
+
+The System Optimum
+==================
+![alt text](https://github.com/maslab-ufrgs/system_optimal_solver/blob/master/system_optimum.png)
+
 
 REFERENCES:
 =======
