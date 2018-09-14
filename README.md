@@ -9,7 +9,7 @@ Can get networks from
 
 Dependencies
 ============
- * [Cplex](https://www-01.ibm.com/software/commerce/optimization/cplex-optimizer/)
+ * [Cplex](https://www-01.ibm.com/software/commerce/optimization/cplex-optimizer/) (Check: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.0/ilog.odms.cplex.help/CPLEX/GettingStarted/topics/set_up/Python_setup.html to install the Python API after installing CPLEX)
  * [DocPlex](https://pypi.python.org/pypi/docplex)
  * [Python 3](https://www.python.org/downloads/)
  * [Python Mathematical Expression Evaluator](https://pypi.python.org/pypi/py_expression_eval)
